@@ -31,19 +31,21 @@ public:
     void StopRecording();
 
 signals:
-    void sig_startRecording(const QString& fileDir);
+    void sig_startRecording(const QString& fileDir, const double& fps);
     void sig_stopRecording();
 
 private:
     Ui::ScreenRecordClass ui;
-    QString m_sFilesDir;         // save files's dir
-    QTimer m_timer2recording;    // timer to recording time
-    bool m_bIsRecording = false; // is recording or not
+    QString m_sFilesDir;             // save files's dir
+    QTimer m_timer2calculateTime;    // timer to calculate time
+    QTimer m_timer2record;           // timer to recording
+    bool m_bIsRecording = false;     // is recording or not
     struct RecordingTimeStruct
     {
         int nHour = 0;
         int nMinute = 0;
         int nSecond = 0;
-    }m_stRecordingTime;          // recording time obj
+    }m_stRecordingTime;              // recording time obj
     RecordingThread* m_pRecordingThread;
+    double m_dFps = 10;              // avi file fps
 };

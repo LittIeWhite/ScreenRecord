@@ -21,11 +21,11 @@ class RecordingThread : public QObject
 	Q_OBJECT
 
 public:
-	RecordingThread(QObject* parent);
+	RecordingThread(QObject* parent = 0);
 	~RecordingThread();
 
 	// start recording
-	void StartRecording(const QString& fileDir);
+	void StartRecording(const QString& fileDir, const double& fps);
 
 	// recording
 	void Recording();
@@ -38,5 +38,4 @@ public:
 private:
 	QThread m_thread;
 	avi_t* m_pFileOutputPath = NULL;    // avi output path obj
-	QTimer m_timer2record;              // timer to recording
 };

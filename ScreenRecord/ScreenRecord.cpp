@@ -5,6 +5,7 @@ ScreenRecord::ScreenRecord(QWidget *parent)
     : QWidget(parent)
 {
     ui.setupUi(this);
+    this->setWindowFlags(Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint);
 
     m_sFilesDir = QCoreApplication::applicationDirPath() + "/Files/";
     QDir dir(m_sFilesDir);
@@ -15,16 +16,17 @@ ScreenRecord::ScreenRecord(QWidget *parent)
     }
 
     // connect slot for timer
-    connect(&m_timer2recording, &QTimer::timeout, this, &ScreenRecord::RecordingTime);
+    connect(&m_timer2calculateTime, &QTimer::timeout, this, &ScreenRecord::RecordingTime);
 
     // connect slot for bottons
     connect(ui.pBtn_openFilesDir, &QPushButton::clicked, this, &ScreenRecord::OpenFilesDir);
     connect(ui.pBtn_record, &QPushButton::clicked, this, &ScreenRecord::StartRecording);
 
     // connect slot for recording thread
-    m_pRecordingThread = new RecordingThread(this);
+    m_pRecordingThread = new RecordingThread();
     connect(this, &ScreenRecord::sig_startRecording, m_pRecordingThread, &RecordingThread::StartRecording);
     connect(this, &ScreenRecord::sig_stopRecording, m_pRecordingThread, &RecordingThread::StopRecording);
+    connect(&m_timer2record, &QTimer::timeout, m_pRecordingThread, &RecordingThread::Recording);
 }
 
 ScreenRecord::~ScreenRecord()
@@ -70,11 +72,12 @@ void ScreenRecord::StartRecording()
         return;
     }
 
-    // start recording
-    emit sig_startRecording(m_sFilesDir);
+    // start timer to calculate time
+    m_timer2calculateTime.start(1000);
 
-    // start timer
-    m_timer2recording.start(1000);
+    // start recording
+    emit sig_startRecording(m_sFilesDir, m_dFps);
+    m_timer2record.start(1000 / m_dFps);
 
     // change UI botton's text to "Stop"
     ui.pBtn_record->setText("Stop");
@@ -87,10 +90,11 @@ void ScreenRecord::StartRecording()
 void ScreenRecord::StopRecording()
 {
     // stop recording
+    m_timer2record.stop();
     emit sig_stopRecording();
 
-    // stop timer
-    m_timer2recording.stop();
+    // stop timer to calculate time
+    m_timer2calculateTime.stop();
 
     // reset recording time
     m_stRecordingTime.nHour = 0;

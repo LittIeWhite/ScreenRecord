@@ -8,9 +8,6 @@ RecordingThread::RecordingThread(QObject *parent)
 	this->moveToThread(&m_thread);
 	m_thread.start();
 
-	// connect slot for timer
-	connect(&m_timer2record, &QTimer::timeout, this, &RecordingThread::Recording);
-
 	m_pFileOutputPath = NULL;
 }
 
@@ -22,7 +19,7 @@ RecordingThread::~RecordingThread()
 }
 
 // start recording
-void RecordingThread::StartRecording(const QString& fileDir)
+void RecordingThread::StartRecording(const QString& fileDir, const double& fps)
 {
 	QString curTime = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
 	QString fileName = fileDir + "/" + curTime + ".avi";
@@ -36,11 +33,7 @@ void RecordingThread::StartRecording(const QString& fileDir)
 
 	// set size, fps, file's format
 	QRect screenRect = QApplication::desktop()->screenGeometry();
-	double fps = 10;
 	AVI_set_video(m_pFileOutputPath, screenRect.width(), screenRect.height(), fps, (char*)"MJPG");
-
-	// start timer to recording
-	m_timer2record.start(1000/fps);
 }
 
 // recording
@@ -68,9 +61,6 @@ void RecordingThread::Recording()
 // stop recording
 void RecordingThread::StopRecording()
 {
-	// stop recording
-	m_timer2record.stop();
-
 	// close avi output obj
 	AVI_close(m_pFileOutputPath);
 }
