@@ -8,6 +8,8 @@
 #include <QScreen>
 #include <QDesktopWidget>
 #include <QBuffer>
+#include <QFile>
+#include <QDir>
 #include <QtWin>
 #include <Windows.h>
 
@@ -25,7 +27,7 @@ public:
 	~RecordingThread();
 
 	// start recording
-	void StartRecording(const QString& fileDir, const double& fps);
+	void StartRecording(const QString& fileName, const double& fps);
 
 	// recording
 	void Recording();
@@ -38,4 +40,5 @@ public:
 private:
 	QThread m_thread;
 	avi_t* m_pFileOutputPath = NULL;    // avi output path obj
+	QString m_sAviDir;                  // save avi's dir
 };

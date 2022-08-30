@@ -9,6 +9,14 @@ RecordingThread::RecordingThread(QObject *parent)
 	m_thread.start();
 
 	m_pFileOutputPath = NULL;
+
+	m_sAviDir = QCoreApplication::applicationDirPath() + "/Files/AVI/";
+	QDir dir(m_sAviDir);
+	if (!dir.exists())
+	{
+		// create files dir
+		dir.mkpath(m_sAviDir);
+	}
 }
 
 RecordingThread::~RecordingThread()
@@ -19,13 +27,12 @@ RecordingThread::~RecordingThread()
 }
 
 // start recording
-void RecordingThread::StartRecording(const QString& fileDir, const double& fps)
+void RecordingThread::StartRecording(const QString& fileName, const double& fps)
 {
-	QString curTime = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
-	QString fileName = fileDir + "/" + curTime + ".avi";
+	QString filePath = m_sAviDir + "/" + fileName + ".avi";
 
 	// set file path
-	m_pFileOutputPath = AVI_open_output_file(fileName.toLocal8Bit().data());
+	m_pFileOutputPath = AVI_open_output_file(filePath.toLocal8Bit().data());
 	if (m_pFileOutputPath == NULL)
 	{
 		return;

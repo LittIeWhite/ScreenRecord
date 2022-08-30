@@ -49,12 +49,18 @@
     <ClCompile Include="SingleApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AudioThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="RecordingThread.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="SingleApplication.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="AudioThread.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
