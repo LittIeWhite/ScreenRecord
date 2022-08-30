@@ -1,3 +1,4 @@
+#pragma execution_character_set("utf-8")
 #include "RecordingThread.h"
 
 RecordingThread::RecordingThread(QObject *parent)

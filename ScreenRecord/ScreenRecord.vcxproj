@@ -23,7 +23,7 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>msvc2015_64</QtInstall>
-    <QtModules>core;gui;widgets;winextras</QtModules>
+    <QtModules>core;gui;widgets;winextras;network</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
@@ -52,6 +52,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="SingleApplication.cpp" />
     <QtRcc Include="ScreenRecord.qrc" />
     <QtUic Include="ScreenRecord.ui" />
     <QtMoc Include="ScreenRecord.h" />
@@ -65,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="avilib.h" />
+    <QtMoc Include="SingleApplication.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

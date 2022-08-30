@@ -1,9 +1,15 @@
+#pragma execution_character_set("utf-8")
 #include "ScreenRecord.h"
-#include <QtWidgets/QApplication>
+#include "SingleApplication.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    SingleApplication a("ScreenRecord", argc, argv);
+    if (a.IsRunning())
+    {
+        QMessageBox::information(0, "Tips", "The app is already running!");
+        return 0;
+    }
     ScreenRecord w;
     w.show();
     return a.exec();
