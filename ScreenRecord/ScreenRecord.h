@@ -8,9 +8,14 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QtConcurrent/QtConcurrent>
+#include <QJsonDocument>
+#include <QAudioRecorder>
+#include <QDesktopWidget>
+#include <QFileDialog>
 
-#include "RecordingThread.h"
-#include "AudioThread.h"
+#include <Windows.h>
+
+#include "WaitDlg.h"
 
 class ScreenRecord : public QWidget
 {
@@ -19,6 +24,15 @@ class ScreenRecord : public QWidget
 public:
     ScreenRecord(QWidget *parent = Q_NULLPTR);
     ~ScreenRecord();
+
+    // init settings
+    void InitSettings();
+
+    // show settings
+    void ShowSettings();
+
+    // select files dir
+    void SelectFilesDir();
 
     // open files dir
     void OpenFilesDir();
@@ -32,27 +46,45 @@ public:
     // stop recording
     void StopRecording();
 
-    // merge avi and wav
-    void MergeAviWav(const QString& fileName);
+    // record finish
+    void RecordFinish();
+
+    // merge screen and sound
+    void MergeScreenAndSound(const QString& fileName);
+
+    // merge screen and sound finish
+    void MergeFinish();
+
+    // to find window
+    static BOOL FindWindowProc(HWND hwnd, LPARAM param);
 
 signals:
-    void sig_startRecording(const QString& fileName, const double& fps);
-    void sig_stopRecording();
+    void sig_mergeFinish();
+    void sig_mergeProgressValue(const int& value);
 
 private:
     Ui::ScreenRecordClass ui;
-    QString m_sFilesDir;             // save files's dir
-    QString m_sFileName;             // current file's name
-    QTimer m_timer2calculateTime;    // timer to calculate time
-    QTimer m_timer2record;           // timer to recording
-    bool m_bIsRecording = false;     // is recording or not
+    struct Settings
+    {
+        QString sWindow;                  // current window title
+        int nFps = 30;                    // video file fps
+        bool bIsRecordScreen = true;      // record screen or not
+        bool bIsRecordMicrophone = true;  // record microphone or not
+        QString sFilesDir;                // save files's dir
+    }m_stSettings;
+
+    QString m_sFileName;                  // current file's name
+    QTimer m_timer2calculateTime;         // timer to calculate time
+    bool m_bIsRecording = false;          // is recording or not
+
     struct RecordingTimeStruct
     {
         int nHour = 0;
         int nMinute = 0;
         int nSecond = 0;
-    }m_stRecordingTime;              // recording time obj
-    RecordingThread* m_pRecordingThread;
-    AudioThread* m_pAudioThread;
-    double m_dFps = 10;              // avi file fps
+    }m_stRecordingTime;                   // recording time obj
+
+    QAudioRecorder m_audioRecorder;
+    QProcess m_screenProcess;
+    WaitDlg m_waitDlg;
 };

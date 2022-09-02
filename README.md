@@ -1,3 +1,3 @@
 # ScreenRecord
 
-Windows screen recording software based on QT, avilib and ffmpeg.
+Windows screen recording software based on QT and ffmpeg.

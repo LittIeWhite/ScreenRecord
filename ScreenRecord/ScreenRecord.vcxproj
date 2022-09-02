@@ -23,7 +23,7 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>msvc2015_64</QtInstall>
-    <QtModules>core;gui;widgets;winextras;network;multimedia</QtModules>
+    <QtModules>core;gui;widgets;network;multimedia</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
@@ -38,6 +38,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
   </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
     <ClCompile>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
@@ -52,22 +61,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AudioThread.cpp" />
     <ClCompile Include="SingleApplication.cpp" />
+    <ClCompile Include="WaitDlg.cpp" />
     <QtRcc Include="ScreenRecord.qrc" />
     <QtUic Include="ScreenRecord.ui" />
     <QtMoc Include="ScreenRecord.h" />
-    <ClCompile Include="avilib.c" />
-    <ClCompile Include="RecordingThread.cpp" />
     <ClCompile Include="ScreenRecord.cpp" />
     <ClCompile Include="main.cpp" />
+    <QtUic Include="WaitDlg.ui" />
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="RecordingThread.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="AudioThread.h" />
-    <ClInclude Include="avilib.h" />
+    <QtMoc Include="WaitDlg.h" />
     <QtMoc Include="SingleApplication.h" />
   </ItemGroup>
   <ItemGroup>

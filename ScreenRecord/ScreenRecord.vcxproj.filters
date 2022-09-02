@@ -40,36 +40,27 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RecordingThread.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="avilib.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SingleApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AudioThread.cpp">
+    <ClCompile Include="WaitDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="RecordingThread.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="SingleApplication.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="AudioThread.h">
+    <QtMoc Include="WaitDlg.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="avilib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <None Include="..\README.md" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\README.md" />
+    <QtUic Include="WaitDlg.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
   </ItemGroup>
 </Project>
