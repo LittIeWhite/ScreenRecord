@@ -2,7 +2,7 @@
 
 #include <QDialog>
 #include "ui_WaitDlg.h"
-#include <QMovie>
+#include <QIcon>
 
 class WaitDlg : public QDialog
 {

@@ -6,6 +6,7 @@ WaitDlg::WaitDlg(QWidget *parent)
 {
 	ui.setupUi(this);
     setWindowFlags(Qt::Dialog | Qt::WindowMinimizeButtonHint);
+	this->setWindowIcon(QIcon(":/Res/ico.ico"));
 }
 
 WaitDlg::~WaitDlg()

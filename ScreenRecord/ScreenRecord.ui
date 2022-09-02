@@ -19,6 +19,10 @@
   <property name="windowTitle">
    <string>ScreenRecord</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="ScreenRecord.qrc">
+    <normaloff>:/Res/ico.ico</normaloff>:/Res/ico.ico</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
     <number>3</number>
