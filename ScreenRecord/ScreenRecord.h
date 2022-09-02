@@ -11,7 +11,6 @@
 #include <QJsonDocument>
 #include <QAudioRecorder>
 #include <QDesktopWidget>
-#include <QFileDialog>
 
 #include <Windows.h>
 
@@ -30,9 +29,6 @@ public:
 
     // show settings
     void ShowSettings();
-
-    // select files dir
-    void SelectFilesDir();
 
     // open files dir
     void OpenFilesDir();

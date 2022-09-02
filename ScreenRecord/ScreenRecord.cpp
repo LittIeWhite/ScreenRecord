@@ -8,7 +8,7 @@ ScreenRecord::ScreenRecord(QWidget* parent)
 
 	// inti UI
 	this->setWindowFlags(Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint);
-	QString strVersion = "ScreenRecord V1.2";
+	QString strVersion = "ScreenRecord V1.3";
 	this->setWindowTitle(strVersion);
 
 	// init settings
@@ -20,7 +20,6 @@ ScreenRecord::ScreenRecord(QWidget* parent)
 	// connect slot for bottons
 	connect(ui.pBtn_record, &QPushButton::clicked, this, &ScreenRecord::StartRecording);
 	connect(ui.pBtn_settings, &QPushButton::clicked, this, &ScreenRecord::ShowSettings);
-	connect(ui.pBtn_selectFileDir, &QPushButton::clicked, this, &ScreenRecord::SelectFilesDir);
 	connect(ui.pBtn_openDir, &QPushButton::clicked, this, &ScreenRecord::OpenFilesDir);
 
 	// connect slot for merge thread
@@ -38,12 +37,13 @@ ScreenRecord::~ScreenRecord()
 // init settings
 void ScreenRecord::InitSettings()
 {
+	QDir::setCurrent(QCoreApplication::applicationDirPath());
+
 	QString iniFile = QCoreApplication::applicationDirPath() + "/Settings.ini";
 	QSettings settings(iniFile, QSettings::Format::IniFormat);
 	m_stSettings.nFps = settings.value("Settings/FPS").toInt();
 	m_stSettings.bIsRecordScreen = settings.value("Settings/IsRecordScreen").toBool();
 	m_stSettings.bIsRecordMicrophone = settings.value("Settings/IsRecordMicrophone").toBool();
-	m_stSettings.sFilesDir = settings.value("Settings/FilesDir").toString();
 
 	// clear win list
 	ui.comboBox_window->clear();
@@ -64,7 +64,7 @@ void ScreenRecord::InitSettings()
 
 	if (m_stSettings.sFilesDir.isEmpty())
 	{
-		m_stSettings.sFilesDir = QCoreApplication::applicationDirPath() + "/Files/";
+		m_stSettings.sFilesDir = "./Files/";
 	}
 	QDir dir(m_stSettings.sFilesDir);
 	if (!dir.exists())
@@ -108,40 +108,17 @@ void ScreenRecord::ShowSettings()
 		m_stSettings.bIsRecordScreen = ui.checkBox_recordScreen->isChecked();
 		m_stSettings.bIsRecordMicrophone = ui.checkBox_recordMicrophone->isChecked();
 
-		m_stSettings.sFilesDir = ui.lineEdit_filesDir->text().trimmed();
-		if (m_stSettings.sFilesDir.isEmpty())
-		{
-			m_stSettings.sFilesDir = QCoreApplication::applicationDirPath() + "/Files/";
-		}
-		QDir dir(m_stSettings.sFilesDir);
-		if (!dir.exists())
-		{
-			// create files dir
-			dir.mkpath(m_stSettings.sFilesDir);
-		}
-
 		QString iniFile = QCoreApplication::applicationDirPath() + "/Settings.ini";
 		QSettings settings(iniFile, QSettings::Format::IniFormat);
 		settings.setValue("Settings/FPS", m_stSettings.nFps);
 		settings.setValue("Settings/IsRecordScreen", m_stSettings.bIsRecordScreen);
 		settings.setValue("Settings/IsRecordMicrophone", m_stSettings.bIsRecordMicrophone);
-		settings.setValue("Settings/FilesDir", m_stSettings.sFilesDir);
 
 		ui.widget_settings->hide();
 		ui.pBtn_settings->setText("Settings");
 
 		// set finish, allow to record
 		ui.pBtn_record->setEnabled(true);
-	}
-}
-
-// select files dir
-void ScreenRecord::SelectFilesDir()
-{
-	QString dirStr = QFileDialog::getExistingDirectory(this, "Select Dir");
-	if (!dirStr.isEmpty())
-	{
-		ui.lineEdit_filesDir->setText(dirStr);
 	}
 }
 
@@ -205,18 +182,18 @@ void ScreenRecord::StartRecording()
 			dir1.mkpath(screenDir);
 		}
 		QString screenFile = screenDir + m_sFileName + ".mp4";
-		QString ffmpeg_path = QCoreApplication::applicationDirPath() + "/ffmpeg.exe";
+		QString ffmpeg_path = "ffmpeg.exe";
 		int offset_x = 0;
 		int offset_y = 0;
 		QString command;
 		if (m_stSettings.sWindow == "desktop")
 		{
 			QRect screenRect = QApplication::desktop()->screenGeometry();
-			command = QString("%1 -f gdigrab -i %2 -framerate %3 -offset_x %4 -offset_y %5 -video_size %6x%7  -pix_fmt yuv420p -vcodec libx264 -crf 18 %8").arg(ffmpeg_path).arg(m_stSettings.sWindow).arg(m_stSettings.nFps).arg(offset_x).arg(offset_y).arg(screenRect.width()).arg(screenRect.height()).arg(screenFile);
+			command = QString("%1 -f gdigrab -i %2 -framerate %3 -offset_x %4 -offset_y %5 -video_size %6x%7  -pix_fmt yuv420p -vcodec libx264 -crf 18 -threads 5 -preset ultrafast %8").arg(ffmpeg_path).arg(m_stSettings.sWindow).arg(m_stSettings.nFps).arg(offset_x).arg(offset_y).arg(screenRect.width()).arg(screenRect.height()).arg(screenFile);
 		}
 		else
 		{
-			command = QString("%1 -f gdigrab -framerate %2 -i title=\"%3\" -pix_fmt yuv420p -vcodec libx264 -crf 18 %4").arg(ffmpeg_path).arg(m_stSettings.nFps).arg(m_stSettings.sWindow).arg(screenFile);
+			command = QString("%1 -f gdigrab -framerate %2 -i title=\"%3\" -pix_fmt yuv420p -vcodec libx264 -crf 18 -threads 5 -preset ultrafast %4").arg(ffmpeg_path).arg(m_stSettings.nFps).arg(m_stSettings.sWindow).arg(screenFile);
 		}
 		m_screenProcess.start(command);
 	}
@@ -224,7 +201,7 @@ void ScreenRecord::StartRecording()
 	// record audio
 	if (m_stSettings.bIsRecordMicrophone)
 	{
-		QString audioDir = m_stSettings.sFilesDir + "/Microphone/";
+		QString audioDir = QCoreApplication::applicationDirPath() + m_stSettings.sFilesDir + "/Microphone/";
 		QDir dir(audioDir);
 		if (!dir.exists())
 		{
@@ -232,6 +209,10 @@ void ScreenRecord::StartRecording()
 			dir.mkpath(audioDir);
 		}
 		QString audioFile = audioDir + m_sFileName;
+		QAudioEncoderSettings audioSettings;
+		audioSettings.setCodec("audio/pcm");
+		audioSettings.setQuality(QMultimedia::HighQuality);
+		m_audioRecorder.setEncodingSettings(audioSettings);
 		m_audioRecorder.setOutputLocation(QUrl::fromLocalFile(audioFile));
 		m_audioRecorder.record();
 	}
@@ -304,10 +285,10 @@ void ScreenRecord::MergeScreenAndSound(const QString& fileName)
 	QString videoPath = m_stSettings.sFilesDir + "/Screen/" + fileName + ".mp4";
 	QString microphonePath = m_stSettings.sFilesDir + "/Microphone/" + fileName + ".wav";
 
-	QString finalPath = m_stSettings.sFilesDir + "/" + fileName + ".mp4";
-	QString finalPath_wav = m_stSettings.sFilesDir + "/" + fileName + ".wav";
+	QString finalPath = m_stSettings.sFilesDir + fileName + ".mp4";
+	QString finalPath_wav = m_stSettings.sFilesDir + fileName + ".wav";
 
-	QString ffmpeg_path = QCoreApplication::applicationDirPath() + "/ffmpeg.exe";
+	QString ffmpeg_path = "ffmpeg.exe";
 
 	QProcess process;
 	QString command;
