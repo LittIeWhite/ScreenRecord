@@ -79,16 +79,18 @@ void ScreenRecord::InitSettings()
 	ui.widget_settings->hide();
 
 	// regsvr32 dll
-	QString dll_path = "audio_sniffer-x64.dll";
-	if (QFile::exists(dll_path))
+	QString tag_path = "/ScreenRecordRegsver32";
+	if (!QFile::exists(tag_path))
 	{
 		QProcess process;
+		QString dll_path = "audio_sniffer-x64.dll";
 		QString command = QString("regsvr32 %1").arg(dll_path);
 		process.start(command);
 		process.waitForFinished(-1);
-		QString dll_path_new = "audio_sniffer-x64_used.dll";
-		QFile dll_file(dll_path);
-		dll_file.rename(dll_path, dll_path_new);
+
+		QFile tag_file(tag_path);
+		tag_file.open(QIODevice::WriteOnly);
+		tag_file.close();
 	}
 }
 
@@ -227,7 +229,7 @@ void ScreenRecord::StartRecording()
 		}
 		QString systemSound = systemSoundDir + m_sFileName + ".wav";
 		QString ffmpeg_path = "ffmpeg.exe";
-		QString command = QString("%1 -f dshow -i audio=\"virtual-audio-capturer\" -ab 192k -ac 2 -preset ultrafast %2").arg(ffmpeg_path).arg(systemSound);
+		QString command = QString("%1 -f dshow -i audio=\"virtual-audio-capturer\" -b:a 192k -ac 2 -preset ultrafast %2").arg(ffmpeg_path).arg(systemSound);
 		m_systemSoundProcess.start(command);
 	}
 
@@ -341,11 +343,11 @@ void ScreenRecord::MergeScreenAndSound(const QString& fileName)
 	QFile microphoneFile(microphonePath);
 	QFile systemSoundFile(systemSoundPath);
 
-	// merge vieo and audio
+	// merge video and audio
 	if (videoFile.exists() && microphoneFile.exists() && systemSoundFile.exists())
 	{
 		// merge screen, microphone and system sound
-		command = QString("%1 -i %2 -i %3 -i %4 -vcodec copy -filter_complex amix=inputs=2:duration=first:dropout_transition=2 -b:a 192k -ac 2 -threads 5 -preset ultrafast %5").arg(ffmpeg_path).arg(videoPath).arg(microphonePath).arg(systemSoundPath).arg(finalPath);
+		command = QString("%1 -i %2 -i %3 -i %4 -vcodec copy -filter_complex amix=inputs=2:duration=longest:dropout_transition=2 -b:a 192k -ac 2 -threads 5 -preset ultrafast %5").arg(ffmpeg_path).arg(videoPath).arg(microphonePath).arg(systemSoundPath).arg(finalPath);
 		process.start(command);
 		process.waitForFinished(-1);
 	}
@@ -394,9 +396,9 @@ void ScreenRecord::MergeScreenAndSound(const QString& fileName)
 	emit sig_mergeProgressValue(90);
 
 	// remove screen and sound
-	videoFile.remove();
+	/*videoFile.remove();
 	microphoneFile.remove();
-	systemSoundFile.remove();
+	systemSoundFile.remove();*/
 
 	// update wait ProgressBar
 	emit sig_mergeProgressValue(100);
