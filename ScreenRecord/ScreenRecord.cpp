@@ -396,9 +396,9 @@ void ScreenRecord::MergeScreenAndSound(const QString& fileName)
 	emit sig_mergeProgressValue(90);
 
 	// remove screen and sound
-	/*videoFile.remove();
+	videoFile.remove();
 	microphoneFile.remove();
-	systemSoundFile.remove();*/
+	systemSoundFile.remove();
 
 	// update wait ProgressBar
 	emit sig_mergeProgressValue(100);
