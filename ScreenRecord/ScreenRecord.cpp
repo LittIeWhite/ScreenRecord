@@ -8,7 +8,7 @@ ScreenRecord::ScreenRecord(QWidget* parent)
 
 	// inti UI
 	this->setWindowFlags(Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint);
-	QString strVersion = "ScreenRecord V1.3";
+	QString strVersion = "ScreenRecord V1.4";
 	this->setWindowTitle(strVersion);
 
 	// init settings
@@ -44,6 +44,7 @@ void ScreenRecord::InitSettings()
 	m_stSettings.nFps = settings.value("Settings/FPS").toInt();
 	m_stSettings.bIsRecordScreen = settings.value("Settings/IsRecordScreen").toBool();
 	m_stSettings.bIsRecordMicrophone = settings.value("Settings/IsRecordMicrophone").toBool();
+	m_stSettings.bIsRecordSystemSound = settings.value("Settings/IsRecordSystemSound").toBool();
 
 	// clear win list
 	ui.comboBox_window->clear();
@@ -61,6 +62,7 @@ void ScreenRecord::InitSettings()
 
 	ui.checkBox_recordScreen->setChecked(m_stSettings.bIsRecordScreen);
 	ui.checkBox_recordMicrophone->setChecked(m_stSettings.bIsRecordMicrophone);
+	ui.checkBox_recordSystemSound->setChecked(m_stSettings.bIsRecordSystemSound);
 
 	if (m_stSettings.sFilesDir.isEmpty())
 	{
@@ -75,6 +77,19 @@ void ScreenRecord::InitSettings()
 	ui.lineEdit_filesDir->setText(m_stSettings.sFilesDir);
 
 	ui.widget_settings->hide();
+
+	// regsvr32 dll
+	QString dll_path = "audio_sniffer-x64.dll";
+	if (QFile::exists(dll_path))
+	{
+		QProcess process;
+		QString command = QString("regsvr32 %1").arg(dll_path);
+		process.start(command);
+		process.waitForFinished(-1);
+		QString dll_path_new = "audio_sniffer-x64_used.dll";
+		QFile dll_file(dll_path);
+		dll_file.rename(dll_path, dll_path_new);
+	}
 }
 
 // show settings
@@ -107,12 +122,14 @@ void ScreenRecord::ShowSettings()
 
 		m_stSettings.bIsRecordScreen = ui.checkBox_recordScreen->isChecked();
 		m_stSettings.bIsRecordMicrophone = ui.checkBox_recordMicrophone->isChecked();
+		m_stSettings.bIsRecordSystemSound = ui.checkBox_recordSystemSound->isChecked();
 
 		QString iniFile = QCoreApplication::applicationDirPath() + "/Settings.ini";
 		QSettings settings(iniFile, QSettings::Format::IniFormat);
 		settings.setValue("Settings/FPS", m_stSettings.nFps);
 		settings.setValue("Settings/IsRecordScreen", m_stSettings.bIsRecordScreen);
 		settings.setValue("Settings/IsRecordMicrophone", m_stSettings.bIsRecordMicrophone);
+		settings.setValue("Settings/IsRecordSystemSound", m_stSettings.bIsRecordSystemSound);
 
 		ui.widget_settings->hide();
 		ui.pBtn_settings->setText("Settings");
@@ -153,7 +170,7 @@ void ScreenRecord::RecordingTime()
 // start recording
 void ScreenRecord::StartRecording()
 {
-	if (!m_stSettings.bIsRecordScreen && !m_stSettings.bIsRecordMicrophone)
+	if (!m_stSettings.bIsRecordScreen && !m_stSettings.bIsRecordMicrophone && !m_stSettings.bIsRecordSystemSound)
 	{
 		// not open record
 		return;
@@ -198,6 +215,22 @@ void ScreenRecord::StartRecording()
 		m_screenProcess.start(command);
 	}
 
+	// record system sound
+	if (m_stSettings.bIsRecordSystemSound)
+	{
+		QString systemSoundDir = m_stSettings.sFilesDir + "/SystemSound/";
+		QDir dir1(systemSoundDir);
+		if (!dir1.exists())
+		{
+			// create files dir
+			dir1.mkpath(systemSoundDir);
+		}
+		QString systemSound = systemSoundDir + m_sFileName + ".wav";
+		QString ffmpeg_path = "ffmpeg.exe";
+		QString command = QString("%1 -f dshow -i audio=\"virtual-audio-capturer\" -ab 192k -ac 2 -preset ultrafast %2").arg(ffmpeg_path).arg(systemSound);
+		m_systemSoundProcess.start(command);
+	}
+
 	// record audio
 	if (m_stSettings.bIsRecordMicrophone)
 	{
@@ -234,6 +267,13 @@ void ScreenRecord::StopRecording()
 	if (m_stSettings.bIsRecordMicrophone)
 	{
 		m_audioRecorder.stop();
+	}
+
+	// stop recording system sound
+	if (m_systemSoundProcess.isOpen())
+	{
+		m_systemSoundProcess.write("q");
+		m_systemSoundProcess.waitForFinished(-1);
 	}
 
 	// stop recording screen
@@ -284,6 +324,7 @@ void ScreenRecord::MergeScreenAndSound(const QString& fileName)
 
 	QString videoPath = m_stSettings.sFilesDir + "/Screen/" + fileName + ".mp4";
 	QString microphonePath = m_stSettings.sFilesDir + "/Microphone/" + fileName + ".wav";
+	QString systemSoundPath = m_stSettings.sFilesDir + "/SystemSound/" + fileName + ".wav";
 
 	QString finalPath = m_stSettings.sFilesDir + fileName + ".mp4";
 	QString finalPath_wav = m_stSettings.sFilesDir + fileName + ".wav";
@@ -298,23 +339,55 @@ void ScreenRecord::MergeScreenAndSound(const QString& fileName)
 
 	QFile videoFile(videoPath);
 	QFile microphoneFile(microphonePath);
+	QFile systemSoundFile(systemSoundPath);
 
-	if (videoFile.exists() && microphoneFile.exists())
+	// merge vieo and audio
+	if (videoFile.exists() && microphoneFile.exists() && systemSoundFile.exists())
 	{
-		// merge screen and sound
-		command = QString("%1 -i %2 -i %3 -vcodec copy -b:a 192k -ac 2 -threads 5 -preset ultrafast %4").arg(ffmpeg_path).arg(videoPath).arg(microphonePath).arg(finalPath);
+		// merge screen, microphone and system sound
+		command = QString("%1 -i %2 -i %3 -i %4 -vcodec copy -filter_complex amix=inputs=2:duration=first:dropout_transition=2 -b:a 192k -ac 2 -threads 5 -preset ultrafast %5").arg(ffmpeg_path).arg(videoPath).arg(microphonePath).arg(systemSoundPath).arg(finalPath);
 		process.start(command);
 		process.waitForFinished(-1);
 	}
-	else if (videoFile.exists() && !microphoneFile.exists())
+	else if (videoFile.exists() && !microphoneFile.exists() && !systemSoundFile.exists())
 	{
 		// only video
 		videoFile.rename(videoPath, finalPath);
 	}
-	else if (!videoFile.exists() && microphoneFile.exists())
+	else if (videoFile.exists() && microphoneFile.exists() && !systemSoundFile.exists())
+	{
+		// merge screen, microphone
+		command = QString("%1 -i %2 -i %3 -vcodec copy -b:a 192k -ac 2 -threads 5 -preset ultrafast %4").arg(ffmpeg_path).arg(videoPath).arg(microphonePath).arg(finalPath);
+		process.start(command);
+		process.waitForFinished(-1);
+	}
+	else if (videoFile.exists() && !microphoneFile.exists() && systemSoundFile.exists())
+	{
+		// merge screen, system sound
+		command = QString("%1 -i %2 -i %3 -vcodec copy -b:a 192k -ac 2 -threads 5 -preset ultrafast %4").arg(ffmpeg_path).arg(videoPath).arg(systemSoundPath).arg(finalPath);
+		process.start(command);
+		process.waitForFinished(-1);
+	}
+	else if (!videoFile.exists() && microphoneFile.exists() && systemSoundFile.exists())
+	{
+		// merge microphone and system sound
+		command = QString("%1 -i %2 -i %3 -b:a 192k -ac 2 -threads 5 -preset ultrafast %4").arg(ffmpeg_path).arg(microphonePath).arg(systemSoundPath).arg(finalPath_wav);
+		process.start(command);
+		process.waitForFinished(-1);
+	}
+	else if (!videoFile.exists() && !microphoneFile.exists() && systemSoundFile.exists())
+	{
+		// only system sound
+		systemSoundFile.rename(systemSoundPath, finalPath_wav);
+	}
+	else if (!videoFile.exists() && microphoneFile.exists() && !systemSoundFile.exists())
 	{
 		// only microphone
 		microphoneFile.rename(microphonePath, finalPath_wav);
+	}
+	else if (!videoFile.exists() && !microphoneFile.exists() && !systemSoundFile.exists())
+	{
+		// no item to merge
 	}
 
 	// update wait ProgressBar
@@ -323,6 +396,7 @@ void ScreenRecord::MergeScreenAndSound(const QString& fileName)
 	// remove screen and sound
 	videoFile.remove();
 	microphoneFile.remove();
+	systemSoundFile.remove();
 
 	// update wait ProgressBar
 	emit sig_mergeProgressValue(100);

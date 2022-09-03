@@ -66,6 +66,7 @@ private:
         int nFps = 30;                    // video file fps
         bool bIsRecordScreen = true;      // record screen or not
         bool bIsRecordMicrophone = true;  // record microphone or not
+        bool bIsRecordSystemSound = true; // record system sound or not
         QString sFilesDir;                // save files's dir
     }m_stSettings;
 
@@ -82,5 +83,6 @@ private:
 
     QAudioRecorder m_audioRecorder;
     QProcess m_screenProcess;
+    QProcess m_systemSoundProcess;
     WaitDlg m_waitDlg;
 };
